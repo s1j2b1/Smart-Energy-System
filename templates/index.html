@@ -1,0 +1,224 @@
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الطاقة الذكي - مراقبة وتحليل</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: auto; padding: 20px; }
+        
+        /* القائمة الجانبية (Sidebar) - التنسيق المفقود */
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 1000; top: 0; right: 0; background-color: #2c3e50; overflow-x: hidden; transition: 0.5s; padding-top: 60px; color: white; box-shadow: -2px 0 5px rgba(0,0,0,0.5); }
+        .sidebar .close-btn { position: absolute; top: 0; left: 25px; font-size: 36px; color: white; text-decoration: none; }
+        .setting-group { padding: 15px 25px; }
+        .setting-group input { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: none; }
+        .open-btn { position: fixed; top: 20px; right: 20px; z-index: 999; background: #2c3e50; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+        .save-btn { background: #27ae60; color: white; border: none; width: 80%; margin: 20px auto; display: block; padding: 12px; border-radius: 5px; cursor: pointer; }
+
+        /* تنسيق قسم الحساسات */
+        .live-sensors { display: flex; gap: 10px; margin-bottom: 30px; justify-content: space-between; flex-wrap: wrap; }
+        .sensor-card { background: #2c3e50; color: white; padding: 15px; border-radius: 12px; flex: 1; min-width: 180px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .sensor-card h3 { margin: 0; font-size: 0.9em; color: #bdc3c7; }
+        .sensor-card p { font-size: 1.5em; font-weight: bold; margin: 5px 0; color: #2ecc71; }
+
+        #map { height: 350px; width: 100%; border-radius: 12px; margin-bottom: 20px; border: 2px solid #ddd; }
+        .forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .forecast-item { background: white; padding: 15px; border-radius: 10px; text-align: center; border-top: 5px solid #27ae60; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .admin-box { background: #eee; padding: 20px; border-radius: 10px; margin-top: 40px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <button class="open-btn" onclick="toggleSidebar()">⚙️ الإعدادات</button>
+
+    <div id="settingsSidebar" class="sidebar">
+        <a href="javascript:void(0)" class="close-btn" onclick="toggleSidebar()">×</a>
+        <h2 style="text-align: center;">إعدادات النظام</h2>
+        <hr>
+
+        <div class="setting-group">
+            <h4>☀️ الخلية الشمسية</h4>
+            <label>القدرة (Watt):</label>
+            <input type="number" id="solar-watt" placeholder="100">
+            <label>الجهد (Vmp):</label>
+            <input type="number" id="solar-vmp" placeholder="18">
+        </div>
+
+        <div class="setting-group">
+            <h4>💨 توربين الرياح</h4>
+            <label>القدرة (Watt):</label>
+            <input type="number" id="wind-watt" placeholder="400">
+            <label>سرعة البدء (m/s):</label>
+            <input type="number" id="wind-cut-in" placeholder="3">
+        </div>
+
+        <div class="setting-group">
+            <h4>🔋 البطارية (12V)</h4>
+            <label>السعة (Ah):</label>
+            <input type="number" id="batt-ah" placeholder="100">
+        </div>
+
+        <button class="save-btn" onclick="saveSettings()">حفظ الإعدادات</button>
+    </div>
+
+    <div class="container">
+        <h1 style="text-align: center;">لوحة مراقبة الطاقة الذكية 🌍</h1>
+
+        <div class="live-sensors">
+            <div class="sensor-card">
+                <h3>أمبير الشمس (الواقعي)</h3>
+                <p><span id="solar-val">{{ sensor_data.solar }}</span> A</p>
+            </div>
+            <div class="sensor-card">
+                <h3>أمبير الرياح (الواقعي)</h3>
+                <p><span id="wind-val">{{ sensor_data.wind }}</span> A</p>
+            </div>
+            <div class="sensor-card">
+                <h3>الإجمالي الواقعي</h3>
+                <p><span id="total-val">{{ sensor_data.total }}</span> A</p>
+            </div>
+            <div class="sensor-card" style="background: #1a1a1a; color: #2ecc71; border: 2px solid #27ae60;">
+                <h3>مدة اكمال الشحن</h3>
+                <p id="realtime-charge-time">جاري الحساب...</p> 
+            </div>
+        </div>
+
+        <hr>
+
+        <p>حدد موقعك على الخريطة لتحليل الطاقة المتوقعة:</p>
+        <div id="map"></div>
+
+        <form method="POST">
+            <input type="hidden" name="lat" id="lat_input" required>
+            <input type="hidden" name="lon" id="lon_input" required>
+
+            <div style="margin-bottom: 15px; text-align: center;">
+                <label style="font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" name="ac_status"> هل تيار المكيف يعمل حالياً؟
+                </label>
+            </div>
+
+            <button type="submit" name="get_weather" style="width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold;">
+                بدء تحليل الطاقة الذكي 🚀
+            </button>
+        </form>
+
+        <div class="simulation-box" style="background: #ebf5fb; padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px dashed #3498db; text-align: center;">
+            <h3 style="color: #2980b9;">🛠️ محاكي الحساسات</h3>
+            <form method="POST" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <input type="number" step="0.01" name="solar_manual" placeholder="شمس" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                <input type="number" step="0.01" name="wind_manual" placeholder="رياح" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                <button type="submit" name="simulate_sensor" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">تحديث</button>
+            </form>
+        </div>
+
+        {% if results %}
+        <div class="result-card" style="margin-top: 30px; border-radius: 15px; padding: 20px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h2 style="text-align: center;">تحليل الموقع: {{ results.city }}</h2>
+            <div class="forecast-grid">
+                {% for i in range(results.days[0]|length) %}
+                <div class="forecast-item">
+                    <h4>{{ results.days[1][i].formatted_day }}</h4>
+                    <p>{{ results.days[0][i].temp }}°C | ☁️ {{ results.days[0][i].cloud }}%</p>
+                    <p><b>💨 {{ results.days[0][i].w_speed }} m/s</b></p>
+                    <h3 style="color: #27ae60;">Total: {{ results.power_list[i].total_power }} A</h3>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="admin-box">
+            <h4>لوحة التحكم 🔐</h4>
+            <input type="password" id="admin_pwd" placeholder="كلمة المرور" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+            <button onclick="goToHistory()" style="background: #34495e; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">السجل</button>
+            <button onclick="downloadCSV()" style="background: #7f8c8d; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">CSV</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // الخريطة
+        var map = L.map('map').setView([23.5859, 58.4059], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        var marker;
+        map.on('click', function(e) {
+            if (marker) map.removeLayer(marker);
+            marker = L.marker(e.latlng).addTo(map);
+            document.getElementById('lat_input').value = e.latlng.lat;
+            document.getElementById('lon_input').value = e.latlng.lng;
+        });
+
+        // القائمة الجانبية
+        function toggleSidebar() {
+            const sidebar = document.getElementById("settingsSidebar");
+            sidebar.style.width = sidebar.style.width === "300px" ? "0" : "300px";
+        }
+
+        // الحفظ
+        function saveSettings() {
+            const settings = {
+                solarWatt: document.getElementById('solar-watt').value,
+                solarVmp: document.getElementById('solar-vmp').value,
+                windWatt: document.getElementById('wind-watt').value,
+                windCutIn: document.getElementById('wind-cut-in').value,
+                battAh: document.getElementById('batt-ah').value
+            };
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            fetch('/update_settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            }).then(() => { alert("تم الحفظ!"); toggleSidebar(); });
+        }
+
+        // تحميل الإعدادات المحفوظة
+        window.onload = function() {
+            const saved = JSON.parse(localStorage.getItem('systemSettings'));
+            if(saved) {
+                document.getElementById('solar-watt').value = saved.solarWatt || "";
+                document.getElementById('solar-vmp').value = saved.solarVmp || "";
+                document.getElementById('wind-watt').value = saved.windWatt || "";
+                document.getElementById('wind-cut-in').value = saved.windCutIn || "";
+                document.getElementById('batt-ah').value = saved.battAh || "";
+            }
+        };
+
+        // تحديث الحساسات
+        function updateSensors() {
+            fetch('/get_live_data')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('solar-val').innerText = data.solar;
+                    document.getElementById('wind-val').innerText = data.wind;
+                    document.getElementById('total-val').innerText = data.total;
+
+                    const total = parseFloat(data.total);
+                    const battAh = parseFloat(localStorage.getItem('systemSettings') ? JSON.parse(localStorage.getItem('systemSettings')).battAh : 100);
+                    
+                    if (total > 0.05) {
+                        let hours = (battAh * 0.5) / total; // فرضنا شحن 50% من البطارية
+                        let h = Math.floor(hours);
+                        let m = Math.round((hours - h) * 60);
+                        document.getElementById('realtime-charge-time').innerText = `${h} س و ${m} د`;
+                    } else {
+                        document.getElementById('realtime-charge-time').innerText = "لا يوجد شحن";
+                    }
+                });
+        }
+        setInterval(updateSensors, 3000);
+
+        function goToHistory() { window.location.href = '/history?password=' + document.getElementById('admin_pwd').value; }
+        function downloadCSV() { window.location.href = '/download?password=' + document.getElementById('admin_pwd').value; }
+    </script>
+</body>
+</html>
+
+
+

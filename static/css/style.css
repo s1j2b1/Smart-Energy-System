@@ -1,0 +1,46 @@
+
+
+/* تنسيق جدول السجل */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+}
+
+.history-table th, .history-table td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.history-table th {
+    background-color: #2c3e50;
+    color: white;
+}
+
+.history-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.back-link {
+    text-decoration: none;
+    color: #34495e;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: 1px solid #34495e;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.back-link:hover {
+    background: #34495e;
+    color: white;
+}
+
+/* تعديل بسيط لزر الإعدادات لضمان ظهوره بشكل صحيح */
+.open-btn {
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+

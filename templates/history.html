@@ -1,0 +1,50 @@
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>سجل البيانات التاريخي</title>
+</head>
+<body>
+    <div class="container">
+        <h2>📊 سجل بيانات الطاقة المجمعة</h2>
+        
+        <div style="overflow-x: auto;"> <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>المدينة</th>
+                        <th>شمس (A)</th>
+                        <th>رياح (A)</th>
+                        <th>الإجمالي (A)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ record.city }}</td>
+                        <td>{{ record.solar_pred }}</td>
+                        <td>{{ record.wind_pred }}</td>
+                        <td style="font-weight: bold; color: #27ae60;">{{ record.total_power }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center;">لا توجد سجلات حالياً</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="/" class="back-link">🏠 العودة للرئيسية</a>
+        </div>
+    </div>
+</body>
+</html>
+
+
