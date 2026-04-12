@@ -230,7 +230,7 @@ def index():
                 
                 # حفظ السجل
                 new_rec = EnergyRecord(
-                    city=data_list[0]['city'], 
+                    city=data_list[0][0]['city'], 
                     lat=float(lat), 
                     lon=float(lon),
                     ac_status="ON" if ac_on else "OFF", 
@@ -251,7 +251,7 @@ def index():
                 db.session.commit()
                 
                 results = {
-                    "city": data_list[0]['city'], 
+                    "city": data_list[0][0]['city'], 
                     "days": data_list,             # هذه هي القائمة التي يبحث عنها الـ HTML
                     "power_list": all_days_power,  # القائمة التي تحتوي حسابات الـ 5 أيام
                     "ac_status": "شغال" if ac_on else "مطفأ",
