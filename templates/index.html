@@ -77,15 +77,15 @@
         <div class="live-sensors">
             <div class="sensor-card">
                 <h3>أمبير الشمس (الواقعي)</h3>
-                <p><span id="solar-val">{{ sensor_data.solar }}</span> A</p>
+                <p><span id="solar-val">{{ sensor_data.amp1 }}</span> A</p>
             </div>
             <div class="sensor-card">
                 <h3>أمبير الرياح (الواقعي)</h3>
-                <p><span id="wind-val">{{ sensor_data.wind }}</span> A</p>
+                <p><span id="wind-val">{{ sensor_data.amp2 }}</span> A</p>
             </div>
             <div class="sensor-card">
                 <h3>الإجمالي الواقعي</h3>
-                <p><span id="total-val">{{ sensor_data.total }}</span> A</p>
+                <p><span id="total-val">{{ sensor_data.amp3 }}</span> A</p>
             </div>
             <div class="sensor-card" style="background: #1a1a1a; color: #2ecc71; border: 2px solid #27ae60;">
                 <h3>مدة اكمال الشحن</h3>
@@ -131,7 +131,7 @@
         <div class="result-card" style="margin-top: 30px; border-radius: 15px; padding: 20px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             
             <h2 style="text-align: center; color: #2c3e50;">
-                ..تحليل الموقع: <span style="color: #3498db;">{{ results.city }}</span> 
+                تحليل الموقع.. <span style="color: #3498db;">{{ results.city }}</span> 
                 <span class="status-badge" style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.6em;">
                     مكيف: {{ results.ac_status }}
                 </span>
@@ -142,7 +142,7 @@
                 {% for i in range(results.days[0]|length) %}
                 <div class="forecast-item" style="border: 1px solid #eee; padding: 15px; border-radius: 10px; text-align: center; background: white;">
 
-                    <h4 style="margin-bottom: 10px; color: #34495e;">{{ results.days[1][i].formatted_day }}</h4> 
+                    <h4 style="margin-bottom: 10px; color: #34495e;">{{ results.days[1][i].day }}</h4> 
                    
                     <p style="font-size: 0.8em;"> {{ results.days[0][i].temp }}°C 🌡️ | ☁️ {{ results.days[0][i].cloud }}%</p>
                     <p style="font-size: 0.9em;"><b>💨 Wind: {{ results.days[0][i].w_speed }} </b> <small>m/s</small></p>
@@ -191,7 +191,7 @@
 
         var marker;
         map.on('click', function(e) {
-            if (marker) map.removeLayer(marker);
+            if (marker) { map.removeLayer(marker); }
             marker = L.marker(e.latlng).addTo(map);
             document.getElementById('lat_input').value = e.latlng.lat;
             document.getElementById('lon_input').value = e.latlng.lng;
@@ -232,32 +232,55 @@
             }
         };
 
-        // تحديث الحساسات
+        // تحديث الحساسات مع معالجة أخطاء الاتصال
         function updateSensors() {
             fetch('/get_live_data')
-                .then(res => res.json())
+                .then(res => res.json()) // تأكدنا أن الاسم res هنا وفي السطر التالي متطابق
                 .then(data => {
                     document.getElementById('solar-val').innerText = data.solar;
                     document.getElementById('wind-val').innerText = data.wind;
                     document.getElementById('total-val').innerText = data.total;
 
                     const total = parseFloat(data.total);
-                    const battAh = parseFloat(localStorage.getItem('systemSettings') ? JSON.parse(localStorage.getItem('systemSettings')).battAh : 100);
+                    const savedSettings = localStorage.getItem('systemSettings');
+                    const battAh = parseFloat(savedSettings ? JSON.parse(savedSettings).battAh : 100);
                     
                     if (total > 0.05) {
-                        let hours = (battAh * 0.5) / total; // فرضنا شحن 50% من البطارية
+                        let hours = (battAh * 0.5) / total; 
                         let h = Math.floor(hours);
                         let m = Math.round((hours - h) * 60);
                         document.getElementById('realtime-charge-time').innerText = `${h} س و ${m} د`;
                     } else {
                         document.getElementById('realtime-charge-time').innerText = "لا يوجد شحن";
                     }
+                })
+                .catch(error => {
+                    console.error('فشل الاتصال بالسيرفر أو جلب البيانات:', error);
+                    // اختياري: يمكنك إظهار رسالة بسيطة للمستخدم في الواجهة هنا
                 });
         }
         setInterval(updateSensors, 3000);
 
-        function goToHistory() { window.location.href = '/history?password=' + document.getElementById('admin_pwd').value; }
-        function downloadCSV() { window.location.href = '/download?password=' + document.getElementById('admin_pwd').value; }
+
+        // دوال لوحة التحكم مع فحص كلمة المرور
+        function goToHistory() { 
+            var p = document.getElementById('admin_pwd').value;
+            if (p) { 
+                window.location.href = '/history?password=' + p; 
+            } else { 
+                alert("الرجاء إدخال كلمة المرور أولاً 🔐"); 
+            }
+        }
+
+        function downloadCSV() { 
+            var p = document.getElementById('admin_pwd').value;
+            if (p) { 
+                window.location.href = '/download?password=' + p; 
+            } else { 
+                alert("الرجاء إدخال كلمة المرور أولاً 🔐"); 
+            }
+        }
+
     </script>
 </body>
 </html>
