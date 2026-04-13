@@ -333,7 +333,7 @@ def update_sensors():
         # (db.session.add بدون) نحدث القيم في الذاكرة فقط 
         live_data["solar"] = float(data.get('ldr1', 0))
         live_data["wind"] = float(data.get('ldr2', 0))
-        live_data["total"] = float(data.get('ldr3', 0))
+        live_data["total"] = float(live_data["solar"] + live_data["wind"])
 
         # هذان السطران هما بمثابة "رسالة تأكيد" أو "إيصال استلام" يرسلها السيرفر (البايثون) إلى
         # ليخبرها بأن المهمة تمت بنجاح ESP32الـ
