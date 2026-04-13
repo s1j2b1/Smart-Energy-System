@@ -142,7 +142,7 @@
                 {% for i in range(results.days[0]|length) %}
                 <div class="forecast-item" style="border: 1px solid #eee; padding: 15px; border-radius: 10px; text-align: center; background: white;">
 
-                    <h4 style="margin-bottom: 10px; color: #34495e;">{{ results.days[1][i].day }}</h4> 
+                    <h4 style="margin-bottom: 10px; color: #34495e;">{{ results.days[1][i].formatted_day }}</h4> 
                    
                     <p style="font-size: 0.8em;"> {{ results.days[0][i].temp }}°C 🌡️ | ☁️ {{ results.days[0][i].cloud }}%</p>
                     <p style="font-size: 0.9em;"><b>💨 Wind: {{ results.days[0][i].w_speed }} </b> <small>m/s</small></p>
