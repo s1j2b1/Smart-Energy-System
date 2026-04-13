@@ -136,6 +136,9 @@ def get_solar_data(lat=0.0, lon=0.0):
             # اظافة البيانات الجديدة للقائمة
             for day, value in ghi_data.items():
                 ghi_list.append({"day": day, "value": value})
+
+        # ترتيب قائمة ناسا حسب التاريخ لضمان التوافق مع الأيام
+        ghi_list = sorted(ghi_list, key=lambda x: x['day'])
         
         return forecasts, ghi_list
     
@@ -222,8 +225,17 @@ def index():
 
             if data_list:
                 all_days_power = []
+                
+                current_now = datetime.now()  # نأخذ تاريخ اليوم
+                
                 for i in range(len(data_list[0])):
                     w, g = data_list[0][i], data_list[1][i]
+
+                    # i ابدأ من اليوم وزد فقط بمقدار 
+                    display_date = current_now + timedelta(days=i)
+
+                    # نستخدم التاريخ "الحديث" للعرض فقط في الجدول
+                    g['formatted_day'] = display_date.strftime('%d/%m/%Y')
 
                     calc = mathenatical_equations(g['value'], w['cloud'], w['temp'], w['w_speed'])[0]
                     all_days_power.append(calc)
