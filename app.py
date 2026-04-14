@@ -344,7 +344,7 @@ def update_sensors():
 # مسار تحديث البيانات بشكل مباشر
 @app.route('/get_live_data')
 def get_live_data():
-    return jsonify({k: "{:.2f}".format(v/100000) for k, v in live_data.items()})
+    return jsonify({k: "{:.2f}".format(v/1000) for k, v in live_data.items()})
 
 
 @app.route('/update_settings', methods=['POST'])
