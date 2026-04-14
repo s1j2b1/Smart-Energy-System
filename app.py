@@ -345,8 +345,18 @@ def update_sensors():
 @app.route('/get_live_data')
 def get_live_data():
     import random
-    x = random.randint(102339, 102359)
-    return jsonify({k: "{:.2f}".format(v/x) for k, v in live_data.items()})
+    
+    for k, v in live_data.items():
+        x = random.randint(102339, 102359)
+        if k == "ldr2":
+            # حساس الضوء نرسله كما هو بدون تقسيم
+            formatted_data[k] = "{:.0f}".format(v) 
+        else:
+            # أي حساس آخر (الأمبير) نقسمه على 100
+            formatted_data[k] = "{:.2f}".format(v / x)
+            
+    return jsonify(formatted_data)
+    # return jsonify({k: "{:.2f}".format(v/x) for k, v in live_data.items()})
 
 
 @app.route('/update_settings', methods=['POST'])
