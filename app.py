@@ -350,13 +350,13 @@ def get_live_data():
     for k, v in live_data.items():
         if k == "ldr1":
             # حساس الضوء نرسله كما هو بدون تقسيم
-            formatted_data["ldr1"] = "{:.0f}".format(5.0) 
-            formatted_data["ldr2"] = "{:.0f}".format(55.0) 
+            formatted_data[k] = "{:.0f}".format(5.0) 
+            # formatted_data["ldr2"] = "{:.0f}".format(55.0) 
             
-        else:
+        if k == "ldr2":
             # أي حساس آخر (الأمبير) نقسمه على 100
-            formatted_data["ldr1"] = "{:.2f}".format(10)
-            formatted_data["ldr2"] = "{:.2f}".format(100)
+            formatted_data[k] = "{:.2f}".format(10)
+            # formatted_data["ldr2"] = "{:.2f}".format(100)
             
             
     return jsonify(formatted_data)
