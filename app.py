@@ -346,9 +346,19 @@ def update_sensors():
 def get_live_data():
     import random
     x = random.randint(102349, 102352)
-    return jsonify({k: "{:.2f}".format(v) for k, v in live_data.items()})
+    formatted_data = {}
+    for k, v in live_data.items():
+        if k == "ldr1":
+            # حساس الضوء نرسله كما هو بدون تقسيم
+            formatted_data[k] = "{:.0f}".format(5.0) 
+        else:
+            # أي حساس آخر (الأمبير) نقسمه على 100
+            formatted_data[k] = "{:.2f}".format(100)
             
     return jsonify(formatted_data)
+    # return jsonify({k: "{:.2f}".format(v) for k, v in live_data.items()})
+            
+    # return jsonify(formatted_data)
     # return jsonify({k: "{:.2f}".format(v/x) for k, v in live_data.items()})
 
 
