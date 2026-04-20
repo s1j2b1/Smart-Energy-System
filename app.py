@@ -353,13 +353,14 @@ def get_live_data():
             formatted_data[k] = "{:.0f}".format(5.0) 
             # formatted_data["ldr2"] = "{:.0f}".format(55.0) 
             
-        if k == "ldr2":
+        elif k == "ldr2":
             # أي حساس آخر (الأمبير) نقسمه على 100
             formatted_data[k] = "{:.2f}".format(10)
             # formatted_data["ldr2"] = "{:.2f}".format(100)
+        else: formatted_data[k] = "{:.2f}".format(v)
             
             
-    return jsonify(formatted_data)
+    return jsonify({formatted_data})
     # return jsonify({k: "{:.2f}".format(v) for k, v in live_data.items()})
             
     # return jsonify(formatted_data)
