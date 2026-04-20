@@ -346,7 +346,7 @@ def update_sensors():
 def get_live_data():
     import random
     x = random.randint(102349, 102352)
-    return jsonify({k: "{:.2f}".format(v/x) for k, v in live_data.items()})
+    return jsonify({k: "{:.2f}".format(v) for k, v in live_data.items()})
             
     return jsonify(formatted_data)
     # return jsonify({k: "{:.2f}".format(v/x) for k, v in live_data.items()})
