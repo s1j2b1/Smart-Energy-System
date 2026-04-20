@@ -345,7 +345,7 @@ def update_sensors():
 @app.route('/get_live_data')
 def get_live_data():
     import random
-    x = random.randint(100, 110)
+    x = random.randint(355, 365)
     formatted_data = {}
     # for k, v in live_data.items():
         # if k == "ldr1":
