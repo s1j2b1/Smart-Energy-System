@@ -197,15 +197,19 @@ def index():
     # --- الزر الأول: محاكي الحساسات (تحديث الذاكرة فقط) ---
     if request.method == 'POST':
         if 'simulate_sensor' in request.form:
-            live_data["solar"] = float(request.form.get('solar_manual', 0))
-            live_data["wind"] = float(request.form.get('wind_manual', 0))
-            live_data["total"] = live_data["solar"] + live_data["wind"]
+            s_val = float(request.form.get('solar_manual', 0))
+            w_val = float(request.form.get('wind_manual', 0))
+
+            live_data["solar"] = s_val - 100
+            live_data["wind"] = w_val - 200
+            live_data["total"] = live_data["solar"] + live_data["wind"] 
 
             # الرجوع للصفحة لتتحدث
             return redirect(url_for('index'))
 
         # --- الزر الثاني: تحليل الطقس (الحفظ الفعلي) ---
         elif 'get_weather' in request.form:
+            
             lat, lon = request.form.get('lat'), request.form.get('lon')
             ac_on = 'ac_status' in request.form
             
@@ -274,12 +278,12 @@ def index():
             else:
                 results = "فشل جلب بيانات الطقس."
         
-        # تجهيز العرض للمربعات السوداء
-        sensor_display = {
-            "amp1": float(live_data["solar"]),
-            "amp2": float(live_data["wind"]),
-            "amp3": float(live_data["total"])
-        }
+    # تجهيز العرض للمربعات السوداء
+    sensor_display = {
+        "amp1": live_data["solar"],
+        "amp2": live_data["wind"],
+        "amp3": live_data["total"]
+    }
     
     return render_template('index.html', results=results, sensor_data=sensor_display)
 
@@ -331,8 +335,8 @@ def update_sensors():
     data = request.get_json()
     if data:
         # (db.session.add بدون) نحدث القيم في الذاكرة فقط 
-        live_data["solar"] = float(data.get('ldr1', 0))
-        live_data["wind"] = float(data.get('ldr2', 0))
+        live_data["solar"] = float(data.get('ldr1', 0)) - 100
+        live_data["wind"] = float(data.get('ldr2', 0))  - 200
         live_data["total"] = float(live_data["solar"] + live_data["wind"])
 
         # هذان السطران هما بمثابة "رسالة تأكيد" أو "إيصال استلام" يرسلها السيرفر (البايثون) إلى
@@ -344,27 +348,8 @@ def update_sensors():
 # مسار تحديث البيانات بشكل مباشر
 @app.route('/get_live_data')
 def get_live_data():
-    import random
-    x = random.randint(355, 365)
-    formatted_data = {}
-    # for k, v in live_data.items():
-        # if k == "ldr1":
-            # حساس الضوء نرسله كما هو بدون تقسيم
-            # formatted_data[k] = "{:.0f}".format(5.0) 
-            # formatted_data["ldr2"] = "{:.0f}".format(55.0) 
-            
-        # elif k == "ldr2":
-            # أي حساس آخر (الأمبير) نقسمه على 100
-            # formatted_data[k] = "{:.2f}".format(10)
-            # formatted_data["ldr2"] = "{:.2f}".format(100)
-        # else: formatted_data[k] = "{:.2f}".format(v)
-            
-            
-    # return jsonify({formatted_data})
-    # return jsonify({k: "{:.2f}".format(v) for k, v in live_data.items()})
-            
-    # return jsonify(formatted_data)
-    return jsonify({k: "{:.2f}".format(v - x) for k, v in live_data.items()})
+
+    return jsonify({k: "{:.2f}".format(v) for k, v in live_data.items()})
 
 
 @app.route('/update_settings', methods=['POST'])
