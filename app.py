@@ -335,8 +335,8 @@ def update_sensors():
     data = request.get_json()
     if data:
         # (db.session.add بدون) نحدث القيم في الذاكرة فقط 
-        live_data["solar"] = float(data.get('ldr1', 0)) - 100
-        live_data["wind"] = float(data.get('ldr2', 0))  - 200
+        live_data["solar"] = float(data.get('ldr1', 0)) / 3000
+        live_data["wind"] = float(data.get('ldr2', 0))  / 3000
         live_data["total"] = float(live_data["solar"] + live_data["wind"])
 
         # هذان السطران هما بمثابة "رسالة تأكيد" أو "إيصال استلام" يرسلها السيرفر (البايثون) إلى
